@@ -1,20 +1,27 @@
 import argparse
-from collections import defaultdict
+from collections import Counter
 import logging
-import math
+from math import log
 import os
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description= 'Compute idf values from corpus')
-    parser.add_argument('corpus', help='word per line')
-    parser.add_argument( 'init_embed', help='vocab in w2v format') 
+        description='Prepare input files for CMultiVec form a corpus.')
+    parser.add_argument('corpus', help='sentence/document per line')
+    parser.add_argument('init_embed', help='vectors in w2v format')
     # w2v embeddings contain words in freq order (that may != idf ord)
-    parser.add_argument('vocab_out')
-    parser.add_argument('idf')
-    parser.add_argument('embed_weights')
-    parser.add_argument('--cutoff', type=int, default=300000)
-    return parser.parse_args()
+    parser.add_argument('vocab', help='vocabulary list (see extract_vocab.py)')
+    parser.add_argument('corpus_out', help='the corpus output file')
+    parser.add_argument('embed_out', help='the output embedding file')
+    parser.add_argument('idf_out', help='the idf output file')
+
+    args = parser.parse_args()
+    for out_fn in [args.corpus_out, args.embed_out, args.idf_out]:
+        if os.path.isfile(out_fn):
+            parser.error('output file {} exists'.format(out_fn))
+    return args
+
 
 def get_logger():
     logger = logging.getLogger()
@@ -25,40 +32,63 @@ def get_logger():
     logger.addHandler(handler)
     return logger
 
+
 def main():
     logger = get_logger()
     args = parse_args()
-    logger.info('Counting words...')
-    n_sent = 0
-    d_freq = defaultdict(int)
-    with open(args.corpus) as corpus_fn:
-        for i, line in enumerate(corpus_fn):
-            if not i % 1000000:
-                logger.info('{:,} sentences read'.format(i))
-            n_sent += 1
-            words = set()
-            for word in line.strip().split():
-                words.add(word) 
-            for word in words:
-                d_freq[word] += 1 
-    for out_fn in [args.vocab_out, args.idf, args.embed_weights]:
-        if os.path.isfile(out_fn):
-            raise IOError('output file exists')
-    logger.info('Reading initial embedding...')
-    with open(args.init_embed) as init_embeed_f:
-        init_embed = [line.split(' ', 1) for line in init_embeed_f]
+    d_freq = Counter()
+
+    logger.info('Reading vocab file...')
+    with open(args.vocab) as inf:
+        vocab = [word.strip() for word in inf.readlines()]
+        vocab_set = set(vocab)
+
+    logger.info('Processing corpus...')
+    with open(args.corpus) as cinf, open(args.corpus_out, 'w') as coutf:
+        for n_sent, line in enumerate(cinf):
+            if n_sent % 1000000 == 0 and n_sent > 0:
+                logger.info('{:,} sentences read'.format(n_sent))
+            words = [w if w in vocab_set else 'UUUNKKK'
+                     for w in line.strip().lower().split()]
+            d_freq.update(set(words))
+            coutf.write("\n".join(words))
+            coutf.write("\noooeddd\n")
+
     logger.info('Writing idfs...')
-    with open(args.vocab_out, mode='w') as vocab_f, open(
-            args.idf, mode='w') as idf_f, open(
-                args.embed_weights, mode='w') as embed_out_f:
-        for i, (word, weights_newline) in  enumerate(init_embed):
-            # heapq.nlargest( args.cutoff, d_freq.items(),
-            # key=operator.itemgetter(1)))
-            if word not in d_freq:
-                continue 
-            vocab_f.write('{}\n'.format(word))
-            idf_f.write('{}\n'.format(math.log(float(n_sent)/d_freq[word], 2)))
-            embed_out_f.write(weights_newline)
+    with open(args.idf_out, mode='w') as outf:
+        for word in vocab:
+            outf.write("{}\n".format(log(1 + float(n_sent) / d_freq[word])))
+
+    logger.info('Filtering embedding...')
+    embed = {}
+    unks = 0
+    with open(args.init_embed) as inf:
+        inf.readline()  # Header
+        for line in inf:
+            word, vector = line.strip().split(' ', 1)
+            wl = word.lower()
+            if word in vocab_set:  # lowercase
+                embed[word] = vector
+            elif wl in vocab_set and wl not in embed:  # uppercase
+                embed[wl] = vector
+            else:
+                unks += 1
+                v = [float(num) for num in vector.split()]
+                if 'UUUNKKK' in embed:
+                    vunk = embed['UUUNKKK']
+                    for i in xrange(len(v)):
+                        vunk[i] += v[i]
+                else:
+                    embed['UUUNKKK'] = v
+        vunk = embed['UUUNKKK']
+        for i in xrange(len(vunk)):
+            vunk[i] = vunk[i] / unks
+        embed['UUUNKKK'] = ' '.join(str(f) for f in vunk)
+
+    logger.info('Writing embedding...')
+    with open(args.embed_out, 'w') as outf:
+        for word in vocab:
+            outf.write("{}\n".format(embed[word]))
 
 if __name__ == '__main__':
     main()
