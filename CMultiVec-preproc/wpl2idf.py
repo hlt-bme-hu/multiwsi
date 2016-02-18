@@ -8,7 +8,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description= 'Compute idf values from corpus')
     parser.add_argument('corpus', help='word per line')
-    parser.add_argument( 'embed_in', help='vocab in w2v format') 
+    parser.add_argument( 'init_embed', help='vocab in w2v format') 
     # w2v embeddings contain words in freq order (that may != idf ord)
     parser.add_argument('vocab_out')
     parser.add_argument('idf')
@@ -45,21 +45,20 @@ def main():
         if os.path.isfile(out_fn):
             raise IOError('output file exists')
     logger.info('Reading initial embedding...')
-    vocab = []
-    with open(args.embed_in) as embed_in_f, open(
-            args.embed_weights, mode='w') as embed_out_f:
-        for line in embed_in_f:
-            word, weights_newline = line.split(' ', 1)
-            vocab.append(word)
-            embed_out_f.write(weights_newline)
+    with open(args.init_embed) as init_embeed_f:
+        init_embed = [line.split(' ', 1) for line in init_embeed_f]
     logger.info('Writing idfs...')
     with open(args.vocab_out, mode='w') as vocab_f, open(
-            args.idf, mode='w') as idf_f:
-        for i, word in  enumerate(vocab):
+            args.idf, mode='w') as idf_f, open(
+                args.embed_weights, mode='w') as embed_out_f:
+        for i, (word, weights_newline) in  enumerate(init_embed):
             # heapq.nlargest( args.cutoff, d_freq.items(),
-            # key=operator.itemgetter(1))):
+            # key=operator.itemgetter(1)))
+            if word not in d_freq:
+                continue 
             vocab_f.write('{}\n'.format(word))
             idf_f.write('{}\n'.format(math.log(float(n_sent)/d_freq[word], 2)))
+            embed_out_f.write(weights_newline)
 
 if __name__ == '__main__':
     main()
