@@ -9,9 +9,7 @@ class AdagramToWord2vecConverter():
     """
     Converts  an AdaGram VSM to a word2vec-like format
 
-    Usage 
-        python adagram_to_word2vec.py model.epi vocab model.jtxt2 model.mpt
-    Creating the input files:
+    Usage:        
         in julia 
             using AdaGram
             vm, dict = load_model("model.jbin");
@@ -21,8 +19,10 @@ class AdagramToWord2vecConverter():
             writedlm("model.jtxt", vm.In)
         then in bash 
             tr -d '][' < model.jtxt > model.jtxt2
+        finally
+            python adagram_to_word2vec.py model.epi vocab model.jtxt2 model.mse
 
-    Output: 
+    Output format (mse): 
         like w2v but more vectors for the same word corresponding to different
         senses
     """
