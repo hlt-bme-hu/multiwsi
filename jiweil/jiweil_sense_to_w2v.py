@@ -13,11 +13,15 @@ def jiweil_posproc(args):
         while True:
             vals = embed_f.readline().strip().split()
             if vals:
-                if len(vals) in [4,2]:
+                len_vals = len(vals)
+                if len_vals in [4,2]:
                     #4: "word", word_i, sense_i, prob
                     word_i = int(vals[1])
-                weights = embed_f.readline().strip()
-                print '{} {}'.format(vocab[word_i], weights)
+                elif len_vals == 1:
+                    # line is like "sense0"
+                    continue
+                else:
+                    print '{} {}'.format(vocab[word_i], ' '.join(vals[1:]))
             else:
                 break
 
