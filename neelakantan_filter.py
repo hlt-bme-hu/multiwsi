@@ -19,7 +19,7 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
             if line:
                 count +=1
                 if not count % 10000:
-                    sys.stdout.write('\rProgression: {:.1%}'.format(count/vocab_size))
+                    sys.stdout.write('\rProgress: {:.1%}'.format(count/vocab_size))
                     sys.stdout.flush()
                 word, sense_num = line.strip().split()
                 vector = inembed_f.readline() # vector ends with '\n'
