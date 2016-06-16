@@ -8,7 +8,7 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
             open(global_fn, mode='w') as global_f, \
             open(sense_fn, mode='w') as sense_f, \
             open(ccent_fn, mode='w') as ccent_f:
-        vocab_size, dim, max_sense, vec_per_sense = inembed_f.readline().strip().split()
+        vocab_size, dim, max_sense, vec_per_sense = inembed_f*.readline().strip().split()
         sense_files = [sense_f, ccent_f][:int(vec_per_sense)]
         for file_ in global_f, sense_f, ccent_f:
             file_.write('{} {}\n'.format(vocab_size, dim))
@@ -22,7 +22,7 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
                     sys.stdout.write('\rProgression: {:.1%}'.format(count/vocab_size))
                     sys.stdout.flush()
                 word, sense_num = line.strip().split()
-                vector = inembed_f.readline() # vector end with '\n'
+                vector = inembed_f.readline() # vector ends with '\n'
                 global_f.write('{} {}'.format(word, vector))
                 for sense in range(int(sense_num)):
                     for file_ in sense_files:
