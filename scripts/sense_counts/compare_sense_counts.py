@@ -91,7 +91,8 @@ def subtract_dict(data_dict, base_dict):
     vb = np.array(map(itemgetter(1), lb))
     slope, intercept, _, _, _ = linregress(vb, vd)
     vdiff = vd - (vb * slope + intercept)
-    return {ld[i][0]: vdiff[i] for i in xrange(len(ld))}
+    vmin = np.min(np.min(vdiff), 0)  # Get rid of negative numbers (for KL)
+    return {ld[i][0]: vdiff[i] - vmin + 0.001 for i in xrange(len(ld))}
 
 
 if __name__ == '__main__':
