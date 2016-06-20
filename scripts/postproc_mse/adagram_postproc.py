@@ -20,7 +20,7 @@ class AdagramToWord2vecConverter():
         then in bash 
             tr -d '][' < model.jtxt > model.jtxt2
         finally
-            python adagram_to_word2vec.py model.epi vocab model.jtxt2 model.mse
+            python adagram_to_word2vec.py dim vocab model.jtxt2 model.mse
 
     Output format (mse): 
         like w2v but more vectors for the same word corresponding to different
