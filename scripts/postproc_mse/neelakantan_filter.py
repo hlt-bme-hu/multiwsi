@@ -8,7 +8,7 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
             open(global_fn, mode='w') as global_f, \
             open(sense_fn, mode='w') as sense_f, \
             open(ccent_fn, mode='w') as ccent_f:
-        vocab_size, dim, max_sense, vec_per_sense = inembed_f*.readline().strip().split()
+        vocab_size, dim, max_sense, vec_per_sense = inembed_f.readline().strip().split()
         sense_files = [sense_f, ccent_f][:int(vec_per_sense)]
         for file_ in global_f, sense_f, ccent_f:
             file_.write('{} {}\n'.format(vocab_size, dim))
