@@ -17,7 +17,7 @@ def parse_arguments():
     parser.add_argument('file2', help='the second file.')
     parser.add_argument('--lower', '-l', action='store_true',
                         help='lowercase words in the dictionaries.')
-    parser.add_argument('--partial', '-p',
+    parser.add_argument('--partial', '-p', action='append',
                         help='subtract the effect of this file from file1 and '
                              'file2 by computing the partial correlation. In '
                              'order for this to word, the subtracted '
@@ -96,10 +96,10 @@ def subtract_dict(data_dict, base_dict):
 
 
 if __name__ == '__main__':
-    dict_file1, dict_file2, lower, dict_file_partial = parse_arguments()
+    dict_file1, dict_file2, lower, dict_file_partials = parse_arguments()
     dict1 = read_dict_file(dict_file1, lower)
     dict2 = read_dict_file(dict_file2, lower)
-    if dict_file_partial:
+    for dict_file_partial in dict_file_partials:
         dict_partial = read_dict_file(dict_file_partial, lower)
         dict1 = subtract_dict(dict1, dict_partial)
         dict2 = subtract_dict(dict2, dict_partial)
