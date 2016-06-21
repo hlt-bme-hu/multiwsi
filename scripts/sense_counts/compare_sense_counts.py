@@ -17,7 +17,7 @@ def parse_arguments():
     parser.add_argument('file2', help='the second file.')
     parser.add_argument('--lower', '-l', action='store_true',
                         help='lowercase words in the dictionaries.')
-    parser.add_argument('--partial', '-p', action='append',
+    parser.add_argument('--partial', '-p', action='append', default=[],
                         help='subtract the effect of this file from file1 and '
                              'file2 by computing the partial correlation. In '
                              'order for this to word, the subtracted '
