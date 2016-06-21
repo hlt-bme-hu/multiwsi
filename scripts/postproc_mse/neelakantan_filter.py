@@ -21,13 +21,19 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
                 if not count % 10000:
                     sys.stdout.write('\rProgress: {:.1%}'.format(count/vocab_size))
                     sys.stdout.flush()
-                word, sense_num = line.strip().split()
+                if line.startswith(' '):
+                    word = None
+                    sense_num = line.strip()
+                else:
+                    word, sense_num = line.strip().split()
                 vector = inembed_f.readline() # vector ends with '\n'
-                global_f.write('{} {}'.format(word, vector))
+                if word:
+                    global_f.write('{} {}'.format(word, vector))
                 for sense in range(int(sense_num)):
                     for file_ in sense_files:
                         vector = inembed_f.readline() # vector end with '\n'
-                        file_.write('{} {}'.format(word, vector))
+                        if word:
+                            file_.write('{} {}'.format(word, vector))
             else:
                 sys.stdout.write('\n'.format(count/vocab_size))
                 break
