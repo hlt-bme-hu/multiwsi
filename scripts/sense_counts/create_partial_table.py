@@ -35,13 +35,12 @@ def parse_arguments():
 def run_compare(base_embedding_files, script_file, dict_file, lower):
     """Runs the comparison by invoking compare_sense_counts.py."""
     base_file, embedding_file = base_embedding_files
-    print script_file, lower, base_file, dict_file, embedding_file
     output = check_output([script_file] + (['-l'] if lower else []) +
                           (['-p', base_file] if base_file else []) +
                           [dict_file, embedding_file])
     fields = output.split("\n")[1].split(' & ')
     return {embedding_file:
-            {base_file: [f.split(' @ ')[0] for f in fields[4: 6]]}}
+            {base_file: [f.split(' @ ')[0] for f in fields[3: 5]]}}
 
 
 def recursive_update(dict1, dict2):
@@ -64,4 +63,18 @@ if __name__ == '__main__':
                  lower=lower)
     dicts = p.map(fn, input_list)
     table = reduce(recursive_update, dicts)
-    print table
+    print '<html><head><title>Embeddings vs {}</title></head><body>'.format(
+        os.path.basename(dict_file))
+    print '<table border=1>'
+    print '<tr><th>Embeddings</th>'
+    for base in sorted(base_files):
+        if base:
+            print '<th>{}</th>'.format(os.path.basename(base))
+        else:
+            print '<th>Vanilla</th>'
+    print '</tr>'
+    for embed, data in sorted(table.iteritems()):
+        print '<tr><td>{}</td>'.format(os.path.basename(embed))
+        for _, values in sorted(data.iteritems()):
+            print '<td>{}</td>'.format('&nbsp;/&nbsp;'.join(values))
+    print '</table>'
