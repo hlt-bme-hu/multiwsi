@@ -56,10 +56,11 @@ def recursive_update(dict1, dict2):
 
 
 def print_html_table(table, dict_file, bases):
-    print '<html><head><title>Embeddings vs {}</title></head><body>'.format(
-        os.path.basename(dict_file))
+    print '<html><head><title>{}</title></head><body>'.format(
+        'Resources vs {} (Spearman / Pearson)'.format(
+            os.path.basename(dict_file)))
     print '<table border=1>'
-    print '<tr><th>Embeddings</th>'
+    print '<tr><th>Resources</th>'
     for base in sorted(bases):
         if base:
             print '<th>{}</th>'.format(os.path.basename(base))
@@ -86,7 +87,8 @@ def print_latex_table(table, dict_file, bases):
     print r'\bottomrule'
     print r'\end{tabular}'
     print r'\caption{{{}}}'.format(
-        'Resources vs {}'.format(os.path.basename(dict_file).replace('_', '\_')))
+        'Resources vs {} (Spearman / Pearson)'.format(
+            os.path.basename(dict_file).replace('_', '\_')))
     print r'\end{table*}'
 
 
