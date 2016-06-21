@@ -23,13 +23,16 @@ def parse_arguments():
                              'correlations are run; can specify more.')
     parser.add_argument('--lower', '-l', action='store_true',
                         help='lowercase words in the dictionaries.')
+    parser.add_argument('--format', '-f', choices=['latex', 'html'],
+                        help='the format of the output table.')
     parser.add_argument('--processes', '-p', type=int, default=1,
                         help='the number of processes to use parallel.')
     parser.add_argument('embeddings', nargs='+',
                         help='the embedding count files we are evaluating.')
     args = parser.parse_args()
 
-    return args.dictionary, args.base, args.lower, args.processes, args.embeddings
+    return (args.dictionary, args.base, args.lower, args.format,
+            args.processes, args.embeddings)
 
 
 def run_compare(base_embedding_files, script_file, dict_file, lower):
@@ -52,22 +55,12 @@ def recursive_update(dict1, dict2):
     return dict1
 
 
-if __name__ == '__main__':
-    dict_file, base_files, lower, processes, embedding_files = parse_arguments()
-    base_files.insert(0, '')  # the vanilla case
-    input_list = list(product(base_files, embedding_files))
-    p = Pool(min(processes, len(input_list)))
-    script_file = os.path.join(os.path.dirname(__file__),
-                               'compare_sense_counts.py')
-    fn = partial(run_compare, script_file=script_file, dict_file=dict_file,
-                 lower=lower)
-    dicts = p.map(fn, input_list)
-    table = reduce(recursive_update, dicts)
+def print_html_table(table, dict_file, bases):
     print '<html><head><title>Embeddings vs {}</title></head><body>'.format(
         os.path.basename(dict_file))
     print '<table border=1>'
     print '<tr><th>Embeddings</th>'
-    for base in sorted(base_files):
+    for base in sorted(bases):
         if base:
             print '<th>{}</th>'.format(os.path.basename(base))
         else:
@@ -78,3 +71,42 @@ if __name__ == '__main__':
         for _, values in sorted(data.iteritems()):
             print '<td>{}</td>'.format('&nbsp;/&nbsp;'.join(values))
     print '</table>'
+
+
+def print_latex_table(table, dict_file, bases):
+    print r'\begin{table*}'
+    print r'\begin{{tabular}}{{ l | {} }}'.format('r' * len(bases))
+    print r'Resources & {} \\'.format(' & '.join(os.path.basename(base)
+                                      if base else 'Vanilla' for base in bases))
+    print r'\midrule'
+    for embed, data in sorted(table.iteritems()):
+        print r'{} & {} \\'.format(
+            os.path.basename(embed).replace('_', '\_'),
+            ' & '.join(' / '.join(values) for _, values in sorted(data.iteritems())))
+    print r'\bottomrule'
+    print r'\end{tabular}'
+    print r'\caption{{{}}}'.format(
+        'Resources vs {}'.format(os.path.basename(dict_file).replace('_', '\_')))
+    print r'\end{table*}'
+
+
+def main():
+    (dict_file, base_files, lower,
+     output_format, processes, embedding_files) = parse_arguments()
+    base_files.insert(0, '')  # the vanilla case
+    input_list = list(product(base_files, embedding_files))
+    p = Pool(min(processes, len(input_list)))
+    script_file = os.path.join(os.path.dirname(__file__),
+                               'compare_sense_counts.py')
+    fn = partial(run_compare, script_file=script_file, dict_file=dict_file,
+                 lower=lower)
+    dicts = p.map(fn, input_list)
+    table = reduce(recursive_update, dicts)
+    if output_format == 'latex':
+        print_latex_table(table, dict_file, base_files)
+    else:
+        print_html_table(table, dict_file, base_files)
+
+
+if __name__ == '__main__':
+    main()
