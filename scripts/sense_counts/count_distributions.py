@@ -7,6 +7,7 @@ from collections import Counter
 from functools import partial
 from itertools import groupby
 from multiprocessing import Pool
+import os
 
 
 def parse_arguments():
@@ -36,12 +37,13 @@ def read_dict_file(dict_file, lower=False):
 def count_senses(resource, max_senses):
     counts = {word: round(senses) for word, senses in
               read_dict_file(resource).iteritems()}
-    cnt = Counter()
+    cnt = Counter({k + 1: 0 for k in xrange(max_senses)})
     for sense, grp in groupby(sorted(counts.values())):
-        if sense < max_senses:
-            cnt[sense] = len(list(grp))
-        else:
-            cnt[max_senses] += len(list(grp))
+        if sense > 0:
+            if sense < max_senses:
+                cnt[sense] = len(list(grp))
+            else:
+                cnt[max_senses] += len(list(grp))
     return {resource: cnt}
 
 
@@ -62,7 +64,7 @@ def print_latex_table(table, max_senses):
     print r'\midrule'
     for resource, counts in sorted(table.iteritems()):
         print r'{} & {} \\'.format(
-            resource.replace('_', '\_'),
+            os.path.basename(resource).replace('_', '\_'),
             ' & '.join(str(count) for _, count in sorted(counts.iteritems())))
     print r'\bottomrule'
     print r'\end{tabular}'
