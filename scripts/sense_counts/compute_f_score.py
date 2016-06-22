@@ -12,7 +12,7 @@ def parse_arguments():
     parser = ArgumentParser(
         description='Computes the F-score for binary adaptivity.')
     parser.add_argument('--dictionary', '-d', required=True,
-                        help='the dictionary counst file against which the '
+                        help='the dictionary counts file against which the '
                              'embeddings are measured.')
     parser.add_argument('--lower', '-l', action='store_true',
                         help='lowercase words in the dictionaries.')
