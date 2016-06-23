@@ -9,9 +9,10 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
             open(global_fn, mode='w') as global_f, \
             open(sense_fn, mode='w') as sense_f, \
             open(ccent_fn, mode='w') as ccent_f:
-        vocab_size, dim, max_sense, vec_per_sense = inembed_f.readline().strip().split()
-        logging.debug((vocab_size, dim, max_sense, vec_per_sense))
-        sense_files = [sense_f, ccent_f][:int(vec_per_sense)]
+        vocab_size, dim, max_sense, just_one_vec_per_sense = inembed_f.readline().strip().split()
+        vec_per_sense = 2 - int(just_one_vec_per_sense)
+        logging.debug('header read {} {} {} {}'.format(vocab_size, dim, max_sense, vec_per_sense))
+        sense_files = [sense_f, ccent_f][:vec_per_sense]
         for file_ in global_f, sense_f, ccent_f:
             file_.write('{} {}\n'.format(vocab_size, dim))
         count = 0
@@ -24,16 +25,20 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
                     sys.stdout.write('\rProgress: {:.1%}'.format(count/vocab_size))
                     sys.stdout.flush()
                 if line.startswith(' '):
+                    logging.warn('word starts with space')
                     word = None
                     sense_num = line.strip()
                 else:
                     word, sense_num = line.strip().split()
+                    logging.debug('{} {}'.format(word, sense_num))
                 vector = inembed_f.readline() # vector ends with '\n'
                 if word:
+                    logging.debug('global')
                     global_f.write('{} {}'.format(word, vector))
                 for sense in range(int(sense_num)):
-                    logging.debug('')
+                    logging.debug('sense {}'.format(sense_num))
                     for file_ in sense_files:
+                        logging.debug(file_)
                         vector = inembed_f.readline() # vector end with '\n'
                         if word:
                             file_.write('{} {}'.format(word, vector))
