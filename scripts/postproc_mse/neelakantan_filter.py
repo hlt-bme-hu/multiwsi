@@ -2,6 +2,7 @@ import argparse
 import gzip
 from os.path import splitext
 import sys
+import logging
 
 def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
     with gzip.open(inembed_fn) as inembed_f, \
@@ -9,6 +10,7 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
             open(sense_fn, mode='w') as sense_f, \
             open(ccent_fn, mode='w') as ccent_f:
         vocab_size, dim, max_sense, vec_per_sense = inembed_f.readline().strip().split()
+        logging.debug((vocab_size, dim, max_sense, vec_per_sense))
         sense_files = [sense_f, ccent_f][:int(vec_per_sense)]
         for file_ in global_f, sense_f, ccent_f:
             file_.write('{} {}\n'.format(vocab_size, dim))
@@ -30,6 +32,7 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
                 if word:
                     global_f.write('{} {}'.format(word, vector))
                 for sense in range(int(sense_num)):
+                    logging.debug('')
                     for file_ in sense_files:
                         vector = inembed_f.readline() # vector end with '\n'
                         if word:
@@ -59,5 +62,7 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
+    format_ = "%(asctime)s %(module)s (%(lineno)s) %(levelname)s %(message)s"
+    logging.basicConfig(level=logging.DEBUG, format=format_)
     args = parse_args()
     neela_filter(args.inembed_gz, args.glob, args.sense, args.clust_cent)
