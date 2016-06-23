@@ -4,6 +4,7 @@
 """Compares sense counts."""
 from argparse import ArgumentParser
 from operator import itemgetter
+import re
 
 import numpy as np
 from scipy.stats import entropy, linregress, pearsonr, spearmanr
@@ -95,6 +96,10 @@ def subtract_dict(data_dict, base_dict):
     return {ld[i][0]: vdiff[i] - vmin + 0.001 for i in xrange(len(ld))}
 
 
+def ffloat(f):
+    return re.sub(r'0+$', '0', '%.3f' % f)
+
+
 if __name__ == '__main__':
     dict_file1, dict_file2, lower, dict_file_partials = parse_arguments()
     dict1 = read_dict_file(dict_file1, lower)
@@ -107,5 +112,5 @@ if __name__ == '__main__':
     print 'words 1 & words 2 & shared words & Spearman & Pearson & KL & JS & cos & Cohen \\\\'
     print '{} & {} & {} & {} & {} & {:.3} & {:.3} & {:.3} & {:.3} \\\\'.format(
         d['dict1'], d['dict2'], d['common'],
-        '{:.3} @ {:.3}'.format(*d['spearman']),
-        '{:.3} @ {:.3}'.format(*d['pearson']), d['kl'], d['js'], d['cos'], d['kappa'])
+        '{} @ {}'.format(*map(ffloat, d['spearman'])),
+        '{} @ {}'.format(*map(ffloat, d['pearson'])), ffloat(d['kl']), ffloat(d['js']), ffloat(d['cos']), ffloat(d['kappa']))

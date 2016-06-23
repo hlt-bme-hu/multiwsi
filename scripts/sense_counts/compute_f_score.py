@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from functools import partial
 from multiprocessing import Pool
 import os
+import re
 
 
 def parse_arguments():
@@ -16,16 +17,13 @@ def parse_arguments():
                              'embeddings are measured.')
     parser.add_argument('--lower', '-l', action='store_true',
                         help='lowercase words in the dictionaries.')
-    parser.add_argument('--format', '-f', choices=['latex', 'html'],
-                        help='the format of the output table.')
     parser.add_argument('--processes', '-p', type=int, default=1,
                         help='the number of processes to use parallel.')
     parser.add_argument('embeddings', nargs='+',
                         help='the embedding count files we are evaluating.')
     args = parser.parse_args()
 
-    return (args.dictionary, args.lower, args.format,
-            args.processes, args.embeddings)
+    return args.dictionary, args.lower, args.processes, args.embeddings
 
 
 def read_dict_file(dict_file, lower):
@@ -72,7 +70,7 @@ def print_latex_table(data, dict_file):
     for resource, scores in sorted(data):
         print r'{} & {} \\'.format(
             os.path.basename(resource).replace('_', '\_'),
-            ' & '.join('{:.3}'.format(score) for score in scores))
+            ' & '.join(re.sub(r'0+$', '0', '%.3f' % score) for score in scores))
     print r'\bottomrule'
     print r'\end{tabular}'
     print r'\caption{{{}}}'.format(
@@ -82,14 +80,12 @@ def print_latex_table(data, dict_file):
 
 
 def main():
-    (dict_file, lower, output_format,
-     processes, embedding_files) = parse_arguments()
+    (dict_file, lower, processes, embedding_files) = parse_arguments()
     p = Pool(min(processes, len(embedding_files)))
     input_files = sorted(embedding_files)
     res = p.map(partial(rate_embedding, dict_file=dict_file, lower=lower),
                 input_files)
-    if output_format == 'latex':
-        print_latex_table(zip(input_files, res), dict_file)
+    print_latex_table(zip(input_files, res), dict_file)
 
 
 if __name__ == '__main__':
