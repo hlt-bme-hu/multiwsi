@@ -110,7 +110,7 @@ if __name__ == '__main__':
         dict2 = subtract_dict(dict2, dict_partial)
     d = compare_dicts(dict1, dict2)
     print 'words 1 & words 2 & shared words & Spearman & Pearson & KL & JS & cos & Cohen \\\\'
-    print '{} & {} & {} & {} & {} & {:.3} & {:.3} & {:.3} & {:.3} \\\\'.format(
+    print '{} & {} & {} & {} & {} & {} & {} & {} & {} \\\\'.format(
         d['dict1'], d['dict2'], d['common'],
         '{} @ {}'.format(*map(ffloat, d['spearman'])),
         '{} @ {}'.format(*map(ffloat, d['pearson'])), ffloat(d['kl']), ffloat(d['js']), ffloat(d['cos']), ffloat(d['kappa']))
