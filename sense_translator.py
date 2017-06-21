@@ -17,11 +17,11 @@ class SenseTranslator():
         * translation matrix
         * a source model with multiple prototypes (i.e. vectors) corresponding
             to different senses of the word forms, and
-        * the target model with a single prototype (usual word2vec format). 
+        * the target model with a single prototype (usually word2vec format). 
     Output: a dictionary containing triplets of
     
         1. the headword (HWD): a source word form, one of whose meanings the
-            record corresponds to)
+            record corresponds to
         2. neighbors: source words that are nearest in the model to the actual
             sense of the HWD, and
         3. translations: target words that are the translation of the actual
@@ -60,7 +60,7 @@ class SenseTranslator():
     def get_embed(self, filen):
         filenp, ext = os.path.splitext(filen)
         logging.info('getting embedding from {} ...'.format(filen))
-        if ext in ['.w2v', '.mpt']:
+        if ext in ['.w2v', '.mse']:
             filen_npz = '{}.npz'.format(filenp)
             if os.path.isfile(filen_npz):
                 logging.warning('embedding also available in npz format')
@@ -68,11 +68,14 @@ class SenseTranslator():
             header = infile.readline().strip()
             vocab_size, dim = [int(token) for token in header.split()]
             vocab = [line.strip().split()[0] for line in infile.readlines()]
-            assert len(vocab) == vocab_size
+            if len(vocab) != vocab_size:
+                logging.warn(
+                    'vocab size is {}, header says {}'.format(len(vocab),
+                                                              vocab_size))
             vecs = numpy.genfromtxt( 
                 open(filen).readlines()[:300001], skip_header=1,
                 usecols=numpy.arange(1,dim+1), comments=None, dtype='float32')
-            if ext == 'mpt' and not os.path.isfile(filen_npz):
+            if ext == 'mse' and not os.path.isfile(filen_npz):
                 logging.info('saving embedding to {}'.format(filen_npz))
                 numpy.savez_compressed(filen_npz, vocab, vecs)
         elif ext == '.npz':
