@@ -2,6 +2,7 @@ import argparse
 import gzip
 from os.path import splitext
 import sys
+import logging
 
 def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
     with gzip.open(inembed_fn) as inembed_f, \
@@ -26,13 +27,24 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
                 if not count % 10000:
                     sys.stdout.write('\rProgress: {:.1%}'.format(count/vocab_size))
                     sys.stdout.flush()
-                word, sense_num = line.strip().split()
+                if line.startswith(' '):
+                    logging.warn('word starts with space')
+                    word = None
+                    sense_num = line.strip()
+                else:
+                    word, sense_num = line.strip().split()
+                    logging.debug('{} {}'.format(word, sense_num))
                 vector = inembed_f.readline() # vector ends with '\n'
-                global_f.write('{} {}'.format(word, vector))
+                if word:
+                    logging.debug('global')
+                    global_f.write('{} {}'.format(word, vector))
                 for sense in range(int(sense_num)):
+                    logging.debug('sense {}'.format(sense_num))
                     for file_ in sense_files:
+                        logging.debug(file_)
                         vector = inembed_f.readline() # vector end with '\n'
-                        file_.write('{} {}'.format(word, vector))
+                        if word:
+                            file_.write('{} {}'.format(word, vector))
             else:
                 sys.stdout.write('\n'.format(count/vocab_size))
                 break
@@ -58,5 +70,7 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
+    format_ = "%(asctime)s %(module)s (%(lineno)s) %(levelname)s %(message)s"
+    logging.basicConfig(level=logging.DEBUG, format=format_)
     args = parse_args()
     neela_filter(args.inembed_gz, args.glob, args.sense, args.clust_cent)
