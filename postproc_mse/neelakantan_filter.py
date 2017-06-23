@@ -11,7 +11,8 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
             open(ccent_fn, mode='w') as ccent_f:
         header = inembed_f.readline().strip().split()
         if len(header) == 4:
-            vocab_size, dim, max_sense, vec_per_sense = header
+            vocab_size, dim, max_sense, minus = (int(str_) for str_ in header)
+            vec_per_sense = max_sense - minus
         else:
             vocab_size, dim = header
             vec_per_sense = 2
@@ -19,21 +20,23 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
         for file_ in global_f, sense_f, ccent_f:
             file_.write('{} {}\n'.format(vocab_size, dim))
         count = 0
-        vocab_size = float(vocab_size)
         while True:
             line = inembed_f.readline()
             if line:
                 count +=1
                 if not count % 10000:
-                    sys.stdout.write('\rProgress: {:.1%}'.format(count/vocab_size))
+                    sys.stdout.write('\rProgress: {:.1%}'.format(float(count)/vocab_size))
                     sys.stdout.flush()
                 if line.startswith(' '):
                     logging.warn('word starts with space')
                     word = None
                     sense_num = line.strip()
                 else:
-                    word, sense_num = line.strip().split()
-                    logging.debug('{} {}'.format(word, sense_num))
+                    try:
+                        word, sense_num = line.strip().split()
+                        logging.debug('{} {}'.format(word, sense_num))
+                    except:
+                        logging.error(line)
                 vector = inembed_f.readline() # vector ends with '\n'
                 if word:
                     logging.debug('global')
@@ -41,12 +44,11 @@ def neela_filter(inembed_fn, global_fn, sense_fn, ccent_fn):
                 for sense in range(int(sense_num)):
                     logging.debug('sense {}'.format(sense_num))
                     for file_ in sense_files:
-                        logging.debug(file_)
                         vector = inembed_f.readline() # vector end with '\n'
                         if word:
                             file_.write('{} {}'.format(word, vector))
             else:
-                sys.stdout.write('\n'.format(count/vocab_size))
+                sys.stdout.write('\n'.format(float(count)/vocab_size))
                 break
 
 
@@ -71,6 +73,6 @@ def parse_args():
 
 if __name__ == '__main__':
     format_ = "%(asctime)s %(module)s (%(lineno)s) %(levelname)s %(message)s"
-    logging.basicConfig(level=logging.DEBUG, format=format_)
+    logging.basicConfig(level=logging.INFO, format=format_)
     args = parse_args()
     neela_filter(args.inembed_gz, args.glob, args.sense, args.clust_cent)
