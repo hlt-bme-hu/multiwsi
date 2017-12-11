@@ -10,7 +10,11 @@ def parse_args():
 
 
 def jiweil_postproc(args):
-    full_vocab = [line.strip() for line in open(args.vocab)]
+    full_vocab = []
+    with open(args.vocab) as infile:
+        for line in infile:
+            line = line.strip()
+            full_vocab.append(line.split()[0] if ' ' in line else line)
     used_vocab = set()
     output_lines = []
     with open(args.sense_vects) as embed_f:
