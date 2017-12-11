@@ -1,5 +1,4 @@
 import argparse
-from itertools import izip
 import logging
 import os
 
@@ -75,7 +74,7 @@ class AdagramToWord2vecConverter():
         logging.info("Writing embedding with shape {} {} to {} ...".format(
             big_voc_size, self.vm.shape[1], self.argv.outfile))
         self.outfile.write("{} {}\n".format(big_voc_size, self.vm.shape[1]))
-        for word, vecs in izip(self.vocab, self.vm):
+        for word, vecs in zip(self.vocab, self.vm):
             for vec in vecs.T[:self.argv.max_sense_num]:
                 if numpy.any(vec):
                     self.outfile.write("{} {}\n".format(word, " ".join(
